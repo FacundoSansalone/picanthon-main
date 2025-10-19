@@ -116,27 +116,27 @@ export function Chat({
           {/* Show welcome message only when there are no messages */}
           {messages.length === 0 ? (
             <div className="flex-1 flex flex-col justify-center items-center px-4">
-              <div className="text-center mb-8 max-w-3xl">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 mb-2">
-                  <h1 className="text-3xl font-bold max-w-[280px] sm:max-w-none leading-tight">Welcome to MCP Chat by Pipedream</h1>
-                  <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 mt-1 sm:mt-0">
-                    Alpha
-                  </span>
+              {/* Logo centrado arriba */}
+              <div className="mb-8 flex justify-center">
+                <div className="size-16 md:size-20 flex items-center rounded-full justify-center bg-gradient-to-br from-primary to-accent shadow-lg">
+                  <svg className="w-8 h-8 md:w-10 md:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
                 </div>
-                <p 
-                  className="text-muted-foreground max-w-sm mx-auto"
-                >
-                  Chat directly with 2,800+ APIs powered by {" "}
-                  <Link
-                    className="font-medium underline underline-offset-4"
-                    href="https://pipedream.com/docs/connect/mcp/developers"
-                    target="_blank"
-                  >
-                    Pipedream Connect
-                  </Link>
-                </p>
               </div>
-              
+
+              {/* Burbuja de texto centrada */}
+              <div className="w-full max-w-2xl mb-10">
+                <div className="bg-card/80 backdrop-blur-md border-2 border-border/60 rounded-3xl px-8 py-6 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
+                  <h2 className="text-2xl md:text-3xl font-semibold text-foreground mb-3 tracking-tight">
+                    Hola, soy Uni
+                  </h2>
+                  <p className="text-lg md:text-xl text-muted-foreground leading-relaxed font-light">
+                    Tu nuevo secretario virtual. ¿Cómo puedo ayudarte hoy?
+                  </p>
+                </div>
+              </div>
+
               {/* Centered input form for home page */}
               <form className="w-full bg-background mb-4 max-w-3xl">
                 {!isReadonly && (
@@ -225,17 +225,42 @@ export function Chat({
           isReadonly={isReadonly}
         />
 
-        <Messages
-          chatId={id}
-          status={status}
-          votes={votes}
-          messages={messages}
-          setMessages={setMessages}
-          reload={reload}
-          isReadonly={isReadonly}
-          isArtifactVisible={isArtifactVisible}
-          append={append}
-        />
+        {messages.length === 0 ? (
+          <div className="flex-1 flex flex-col justify-center items-center px-4">
+            {/* Logo centrado arriba */}
+            <div className="mb-8 flex justify-center">
+              <div className="size-16 md:size-20 flex items-center rounded-full justify-center bg-gradient-to-br from-primary to-accent shadow-lg">
+                <svg className="w-8 h-8 md:w-10 md:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Burbuja de texto centrada */}
+            <div className="w-full max-w-2xl">
+              <div className="bg-card/80 backdrop-blur-md border-2 border-border/60 rounded-3xl px-8 py-6 shadow-lg hover:shadow-xl transition-shadow duration-300 text-center">
+                <h2 className="text-2xl md:text-3xl font-semibold text-foreground mb-3 tracking-tight">
+                  Hola, soy Uni
+                </h2>
+                <p className="text-lg md:text-xl text-muted-foreground leading-relaxed font-light">
+                  Tu nuevo secretario virtual. ¿Cómo puedo ayudarte hoy?
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Messages
+            chatId={id}
+            status={status}
+            votes={votes}
+            messages={messages}
+            setMessages={setMessages}
+            reload={reload}
+            isReadonly={isReadonly}
+            isArtifactVisible={isArtifactVisible}
+            append={append}
+          />
+        )}
 
         <form className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl">
           {!isReadonly && (

@@ -61,8 +61,8 @@ const PurePreviewMessage = ({
           )}
         >
           {message.role === 'assistant' && (
-            <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border bg-background">
-              <div className="translate-y-px">
+            <div className="size-8 flex items-center rounded-full justify-center shrink-0 bg-gradient-to-br from-primary to-accent shadow-sm">
+              <div className="translate-y-px text-white">
                 <SparklesIcon size={14} />
               </div>
             </div>
@@ -121,8 +121,8 @@ const PurePreviewMessage = ({
                       {!part.text.includes("https://pipedream.com/_static/connect.html") && (
                         <div
                           data-testid="message-content"
-                          className={cn('flex flex-col gap-4', {
-                            'bg-primary text-primary-foreground px-3 py-2 rounded-xl':
+                          className={cn('flex flex-col gap-4 transition-all duration-200', {
+                            'bg-primary text-primary-foreground px-4 py-3 rounded-2xl shadow-sm hover:shadow-md':
                               message.role === 'user',
                           })}
                         >
@@ -261,8 +261,10 @@ export const ThinkingMessage = () => {
           },
         )}
       >
-        <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
-          <SparklesIcon size={14} />
+        <div className="size-8 flex items-center rounded-full justify-center shrink-0 bg-gradient-to-br from-primary to-accent shadow-sm">
+          <div className="text-white">
+            <SparklesIcon size={14} />
+          </div>
         </div>
 
         <div className="flex flex-col gap-2 w-full">

@@ -84,50 +84,6 @@ function Banner({
  * provides helpful links to documentation.
  */
 export function InfoBanner({ isAuthDisabled: isAuthDisabledMode, isPersistenceDisabled = false, className = "" }: InfoBannerProps) {
-  const { dismissBanner, isBannerDismissed } = useDismissibleBanners();
-
-  const showMainBanner = !isBannerDismissed('main');
-  const showPersistenceWarning = isPersistenceDisabled && !isBannerDismissed('persistence');
-
-  // Don't render anything if both banners are dismissed
-  if (!showMainBanner && !showPersistenceWarning) {
-    return null;
-  }
-
-  return (
-    <div className={`flex flex-col gap-2 ${className}`}>
-      {showMainBanner && (
-        <Banner 
-          theme={isAuthDisabledMode ? 'warning' : 'info'} 
-          onDismiss={() => dismissBanner('main')}
-        >
-          {isAuthDisabledMode ? (
-            <span>User sign-in is currently disabled, make sure to enable before shipping to production.</span>
-          ) : (
-            <span>
-              This demo app showcases how you can integrate Pipedream&apos;s MCP server into your AI app.{' '}
-              <a 
-                href="https://pipedream.com/docs/connect/mcp/developers" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 hover:underline hover:text-blue-600 dark:hover:text-blue-400 font-semibold"
-              >
-                Check out our docs
-              </a>
-              {' '} to get started.
-            </span>
-          )}
-        </Banner>
-      )}
-
-      {showPersistenceWarning && (
-        <Banner 
-          theme="warning" 
-          onDismiss={() => dismissBanner('persistence')}
-        >
-          <span>Chat storage is currently disabled. Your conversations will not be saved.</span>
-        </Banner>
-      )}
-    </div>
-  );
+  // Ocultar todos los banners para mantener diseño limpio y profesional
+  return null;
 }

@@ -3,16 +3,14 @@
 import { useRouter } from "next/navigation"
 import { useEffectiveSession } from '@/hooks/use-effective-session'
 
-import { ModelSelector } from "@/components/model-selector"
 import { SidebarToggle } from "@/components/sidebar-toggle"
 import { Button } from "@/components/ui/button"
-import { GitHubButton } from "@/components/github-button"
-import { DocsButton } from "@/components/docs-button"
 import { memo } from "react"
 import { PlusIcon } from "./icons"
 import { useSidebar } from "./ui/sidebar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
 import { VisibilitySelector, VisibilityType } from "./visibility-selector"
+import { Calendar } from "lucide-react"
 
 function PureChatHeader({
   chatId,
@@ -43,15 +41,6 @@ function PureChatHeader({
       </div>
 
       {/* Mobile layout: Show controls in left-to-right order with new chat button on the right */}
-      {!isReadonly && (
-        <div className="mt-1 md:hidden">
-          <ModelSelector
-            selectedModelId={selectedModelId}
-            className=""
-          />
-        </div>
-      )}
-
       {!isReadonly && (
         <div className="mt-1 md:hidden">
           <VisibilitySelector
@@ -110,15 +99,6 @@ function PureChatHeader({
       {/* Desktop layout: Show controls after new chat button */}
       {!isReadonly && (
         <div className="mt-1 hidden md:block">
-          <ModelSelector
-            selectedModelId={selectedModelId}
-            className=""
-          />
-        </div>
-      )}
-
-      {!isReadonly && (
-        <div className="mt-1 hidden md:block">
           <VisibilitySelector
             chatId={chatId}
             selectedVisibilityType={selectedVisibilityType}
@@ -130,9 +110,37 @@ function PureChatHeader({
       {/* Spacer to push buttons to the right on desktop */}
       <div className="flex-1 hidden md:block"></div>
 
-      <div className="mt-1 hidden md:flex gap-2 ml-auto">
-        <GitHubButton style="secondary" />
-        <DocsButton style="main" />
+      {/* Ver Calendario button - Desktop */}
+      <div className="mt-1 hidden md:block">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              className="px-3 h-fit bg-accent/10 hover:bg-accent/20 text-primary border-accent/30"
+              onClick={() => window.open('https://calendar.google.com', '_blank')}
+            >
+              <Calendar className="size-4 mr-2" />
+              <span>Ver Calendario</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Abrir Google Calendar</TooltipContent>
+        </Tooltip>
+      </div>
+
+      {/* Ver Calendario button - Mobile */}
+      <div className="mt-1 md:hidden">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              className="px-2 bg-accent/10 hover:bg-accent/20 text-primary border-accent/30"
+              onClick={() => window.open('https://calendar.google.com', '_blank')}
+            >
+              <Calendar className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Ver Calendario</TooltipContent>
+        </Tooltip>
       </div>
     </header>
   )
