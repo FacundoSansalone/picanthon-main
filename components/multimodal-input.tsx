@@ -23,11 +23,8 @@ import { PreviewAttachment } from './preview-attachment';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { SuggestedActions } from './suggested-actions';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import equal from 'fast-deep-equal';
 import { UseChatHelpers } from '@ai-sdk/react';
-import { AppSelector, type App } from './app-selector';
-import { Hammer } from 'lucide-react';
 
 function PureMultimodalInput({
   chatId,
@@ -108,7 +105,6 @@ function PureMultimodalInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
-  const [appSelectorOpen, setAppSelectorOpen] = useState(false);
 
   const { data: session, status: authStatus } = useEffectiveSession();
   
@@ -214,24 +210,6 @@ function PureMultimodalInput({
         onClose={() => setIsSignInModalOpen(false)} 
       />
       
-      <AppSelector 
-        open={appSelectorOpen} 
-        onOpenChange={setAppSelectorOpen}
-        onAppSelect={(app: App) => {
-          setInput((prev) => {
-            if (!prev || prev.trim() === '') {
-              return `Use ${app.name} to `;
-            } else {
-              return `${prev}${prev.endsWith(' ') ? '' : ' '}and use ${app.name} to `;
-            }
-          });
-          
-          // Focus the input after selecting an app
-          setTimeout(() => {
-            textareaRef.current?.focus();
-          }, 0);
-        }}
-      />
       
       {messages.length === 0 &&
         attachments.length === 0 &&
@@ -306,10 +284,6 @@ function PureMultimodalInput({
           status={status} 
           setSignInModalOpen={setIsSignInModalOpen}
         /> */}
-        <AppsButton 
-          status={status}
-          setAppSelectorOpen={setAppSelectorOpen}
-        />
       </div>
 
       <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
@@ -372,40 +346,6 @@ function PureAttachmentsButton({
 
 const AttachmentsButton = memo(PureAttachmentsButton);
 
-function PureAppsButton({
-  status,
-  setAppSelectorOpen
-}: {
-  status: UseChatHelpers['status'];
-  setAppSelectorOpen: (isOpen: boolean) => void;
-}) {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            data-testid="apps-button"
-            className="rounded-md rounded-bl-lg p-2 h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200"
-            onClick={(event) => {
-              event.preventDefault();
-              setAppSelectorOpen(true);
-            }}
-            disabled={status !== 'ready'}
-            variant="ghost"
-            aria-label="Explore available tools"
-          >
-            <Hammer size={14} />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Explore available tools</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
-const AppsButton = memo(PureAppsButton);
 
 function PureStopButton({
   stop,

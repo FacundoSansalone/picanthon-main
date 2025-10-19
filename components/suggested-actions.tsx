@@ -60,22 +60,22 @@ function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
       webSearchIcon: true,
     },
     {
-      title: 'Tell me about my recent customers',
-      label: 'in Stripe and how much they spent',
-      action: 'Tell me about the most recent 5 customers in Stripe — who are they and how much were their invoices?',
-      appSlugs: ['app_OD5hrX'],
-    },
-    {
-      title: 'Draft a product changelog',
-      label: 'based on recently closed PRs',
-      action: 'Summarize the 10 most recently closed PRs in GitHub and draft a changelog announcement for me in a Notion doc.',
-      appSlugs: ['app_OrZhaO', 'app_X7Lhxr'],
-    },
-    {
       title: 'Summarize my calendar',
       label: 'for next week',
       action: 'Summarize the events on my calendar for next week and give me some of the key takeaway, not every single detail.',
       appSlugs: ['app_13Gh2V'],
+    },
+    {
+      title: 'Check my unread emails',
+      label: 'and prioritize the most important ones',
+      action: 'Check my Gmail inbox and show me the most important unread emails that need my attention, prioritizing by sender and subject.',
+      appSlugs: ['gmail'],
+    },
+    {
+      title: 'Draft a response',
+      label: 'to my latest important email',
+      action: 'Find my most recent important email in Gmail and help me draft a professional response.',
+      appSlugs: ['gmail'],
     },
   ];
 
@@ -122,11 +122,19 @@ function PureSuggestedActions({ chatId, append }: SuggestedActionsProps) {
                       key={`app-icon-${slug}`} 
                       className="size-5 rounded-sm overflow-hidden flex items-center justify-center"
                     >
-                      <img
-                        src={`https://pipedream.com/s.v0/${slug}/logo/48`}
-                        alt={slug}
-                        className="size-full object-contain"
-                      />
+                      {slug === 'gmail' ? (
+                        <img
+                          src="https://play-lh.googleusercontent.com/KSuaRLiI_FlDP8cM4MzJ23ml3og5Hxb9AapaGTMZ2GgR103mvJ3AAnoOFz1yheeQBBI"
+                          alt="Gmail"
+                          className="size-full object-contain"
+                        />
+                      ) : (
+                        <img
+                          src={`https://pipedream.com/s.v0/${slug}/logo/48`}
+                          alt={slug}
+                          className="size-full object-contain"
+                        />
+                      )}
                     </div>
                   ))}
                 </div>

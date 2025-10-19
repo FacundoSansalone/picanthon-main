@@ -122,8 +122,22 @@ const PurePreviewMessage = ({
                         <div
                           data-testid="message-content"
                           className={cn('flex flex-col gap-4 transition-all duration-200', {
-                            'bg-primary text-primary-foreground px-4 py-3 rounded-2xl shadow-sm hover:shadow-md':
+                            'bg-primary px-4 py-3 rounded-2xl shadow-sm hover:shadow-md':
                               message.role === 'user',
+                            'text-primary-foreground':
+                              message.role === 'user' && !(
+                                part.text.toLowerCase().includes('gmail') || 
+                                part.text.toLowerCase().includes('email') ||
+                                part.text.toLowerCase().includes('inbox') ||
+                                part.text.toLowerCase().includes('correo')
+                              ),
+                            'text-red-600 dark:text-red-400': 
+                              message.role === 'user' && (
+                                part.text.toLowerCase().includes('gmail') || 
+                                part.text.toLowerCase().includes('email') ||
+                                part.text.toLowerCase().includes('inbox') ||
+                                part.text.toLowerCase().includes('correo')
+                              ),
                           })}
                         >
                           <Markdown>{part.text}</Markdown>
