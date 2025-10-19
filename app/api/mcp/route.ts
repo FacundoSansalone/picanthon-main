@@ -27,7 +27,7 @@ export async function POST(req: Request) {
           content: message,
         },
       ],
-      selectedChatModel: "gpt-4o", // ← AGREGADO: modelo por defecto
+      selectedChatModel: "gpt-4o-mini", // ← AGREGADO: modelo por defecto
       // si tu /api/chat soporta "stream: false", activalo para no recibir SSE
       stream: false,
     };
