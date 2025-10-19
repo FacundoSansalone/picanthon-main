@@ -41,6 +41,7 @@ pnpm install
 Crea un archivo `.env` en la raíz:
 ##Copiar el .env.example
 
+
 ### 4. Iniciar
 
 ```bash
