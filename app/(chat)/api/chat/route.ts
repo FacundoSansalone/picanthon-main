@@ -1,94 +1,114 @@
-import { auth } from "@/app/(auth)/auth"
-import { systemPrompt } from "@/lib/ai/prompts"
-import { myProvider } from "@/lib/ai/providers"
-import { isProductionEnvironment, isAuthDisabled } from "@/lib/constants"
+import { auth } from "@/app/(auth)/auth";
+import { systemPrompt } from "@/lib/ai/prompts";
+import { myProvider } from "@/lib/ai/providers";
+import { isProductionEnvironment } from "@/lib/constants";
 import {
   deleteChatById,
   getChatById,
   saveChat,
   saveMessages,
-} from "@/lib/db/queries"
+} from "@/lib/db/queries";
 import {
   generateUUID,
   getMostRecentUserMessage,
   getTrailingMessageId,
-} from "@/lib/utils"
-import { getEffectiveSession, shouldPersistData } from "@/lib/auth-utils"
-import { MCPSessionManager } from "@/mods/mcp-client"
+} from "@/lib/utils";
+import { getEffectiveSession, shouldPersistData } from "@/lib/auth-utils";
+import { MCPSessionManager } from "@/mods/mcp-client";
 import {
   UIMessage,
   appendResponseMessages,
   createDataStreamResponse,
   smoothStream,
-} from "ai"
-import { generateTitleFromUserMessage } from "../../actions"
-import { streamText } from "./streamText"
+} from "ai";
+import { generateTitleFromUserMessage } from "../../actions";
+import { streamText } from "./streamText";
 
-export const maxDuration = 60
+export const maxDuration = 60;
 
-const MCP_BASE_URL = process.env.MCP_SERVER ? process.env.MCP_SERVER : "https://remote.mcp.pipedream.net"
-
+const MCP_BASE_URL = process.env.MCP_SERVER
+  ? process.env.MCP_SERVER
+  : "https://remote.mcp.pipedream.net";
 
 export async function POST(request: Request) {
   try {
-    const {
-      id,
-      messages,
-      selectedChatModel,
-    }: {
-      id: string
-      messages: Array<UIMessage>
-      selectedChatModel: string
-    } = await request.json()
+    const raw = await request.json();
 
-    const session = await getEffectiveSession()
+    // ✅ Aceptamos alias y damos fallbacks robustos
+    const id: string =
+      raw?.id ||
+      raw?.chatId ||
+      process.env.DEFAULT_CHAT_ID ||
+      generateUUID();
 
-    // Debug logging for production
-    console.log('DEBUG: Session details:', {
+    const messages: Array<UIMessage> = Array.isArray(raw?.messages)
+      ? raw.messages
+      : [];
+
+    // Prioridad: body.model -> body.selectedChatModel -> env -> default
+    const selectedChatModel: string =
+      (typeof raw?.model === "string" && raw.model.trim()) ||
+      (typeof raw?.selectedChatModel === "string" &&
+        raw.selectedChatModel.trim()) ||
+      process.env.DEFAULT_CHAT_MODEL ||
+      "gpt-4o-mini";
+
+    const session = await getEffectiveSession();
+
+    console.log("DEBUG: Session details:", {
       hasSession: !!session,
       hasUser: !!session?.user,
       userId: session?.user?.id,
-      sessionType: session?.constructor?.name || 'unknown',
-      isAuthDisabled: process.env.DISABLE_AUTH === 'true',
-      timestamp: new Date().toISOString()
-    })
+      sessionType: session?.constructor?.name || "unknown",
+      isAuthDisabled: process.env.DISABLE_AUTH === "true",
+      timestamp: new Date().toISOString(),
+    });
 
     if (!session || !session.user || !session.user.id) {
-      console.error('Session validation failed:', {
+      console.error("Session validation failed:", {
         hasSession: !!session,
         hasUser: !!session?.user,
         userId: session?.user?.id,
-        fullSession: session
-      })
-      return new Response(JSON.stringify({ error: "Authentication required", redirectToAuth: true }), { 
-        status: 401,
-        headers: {
-          'Content-Type': 'application/json'
+        fullSession: session,
+      });
+      return new Response(
+        JSON.stringify({
+          error: "Authentication required",
+          redirectToAuth: true,
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
         }
-      })
+      );
     }
 
-    const userId = session.user.id
+    const userId = session.user.id;
 
-    const userMessage = getMostRecentUserMessage(messages)
-
+    // ✅ Si no hay userMessage (p.ej. ping de materialización), inyectamos uno
+    let userMessage = getMostRecentUserMessage(messages);
     if (!userMessage) {
-      return new Response("No user message found", { status: 400 })
+      // Creamos un mínimo mensaje de usuario para evitar 400
+      userMessage = {
+        id: generateUUID(),
+        role: "user",
+        parts: [{ type: "text", text: "init" }],
+        experimental_attachments: [],
+      } as UIMessage;
     }
 
-    // Only check/save chat and messages if persistence is enabled
+    // Persistencia condicional
     if (shouldPersistData()) {
-      const chat = await getChatById({ id })
+      const chat = await getChatById({ id });
 
       if (!chat) {
         const title = await generateTitleFromUserMessage({
           message: userMessage,
-        })
-
-        await saveChat({ id, userId, title })
+        });
+        await saveChat({ id, userId, title });
       } else {
         if (chat.userId !== userId) {
-          return new Response("Unauthorized", { status: 401 })
+          return new Response("Unauthorized", { status: 401 });
         }
       }
 
@@ -103,52 +123,64 @@ export async function POST(request: Request) {
             createdAt: new Date(),
           },
         ],
-      })
+      });
     }
 
-    // get any existing mcp sessions from the mcp server
-    const mcpSessionUrl = `${MCP_BASE_URL}/v1/${userId}/sessions`
-    console.log('DEBUG: Fetching MCP sessions from:', mcpSessionUrl)
-    console.log('DEBUG: Looking for chat ID:', id)
-    
-    const mcpSessionsResp = await fetch(mcpSessionUrl)
-    let sessionId = undefined
-    
-    console.log('DEBUG: MCP sessions response:', {
+    // 🔌 MCP sessions
+    const mcpSessionUrl = `${MCP_BASE_URL}/v1/${userId}/sessions`;
+    console.log("DEBUG: Fetching MCP sessions from:", mcpSessionUrl);
+    console.log("DEBUG: Looking for chat ID:", id);
+
+    const mcpSessionsResp = await fetch(mcpSessionUrl);
+    let sessionId: string | undefined = undefined;
+
+    console.log("DEBUG: MCP sessions response:", {
       ok: mcpSessionsResp.ok,
       status: mcpSessionsResp.status,
       statusText: mcpSessionsResp.statusText,
-      headers: Object.fromEntries(mcpSessionsResp.headers.entries())
-    })
-    
+      headers: Object.fromEntries(mcpSessionsResp.headers.entries()),
+    });
+
     if (mcpSessionsResp.ok) {
-      const body = await mcpSessionsResp.json()
-      console.log('DEBUG: MCP sessions body:', body)
-      console.log('DEBUG: Looking for body[id]:', body[id])
-      console.log('DEBUG: Looking for body.mcpSessions[id]:', body.mcpSessions ? body.mcpSessions[id] : 'mcpSessions not found')
-      
-      // Try both formats to see which one works
+      const body = await mcpSessionsResp.json();
+      console.log("DEBUG: MCP sessions body:", body);
+      console.log("DEBUG: Looking for body[id]:", body[id]);
+      console.log(
+        "DEBUG: Looking for body.mcpSessions[id]:",
+        body.mcpSessions ? body.mcpSessions[id] : "mcpSessions not found"
+      );
+
       if (body.mcpSessions && body.mcpSessions[id]) {
-        sessionId = body.mcpSessions[id]
-        console.log('DEBUG: Found sessionId in body.mcpSessions[id]:', sessionId)
+        sessionId = body.mcpSessions[id];
+        console.log("DEBUG: Found sessionId in body.mcpSessions[id]:", sessionId);
       } else if (body[id]) {
-        sessionId = body[id]
-        console.log('DEBUG: Found sessionId in body[id]:', sessionId)
+        sessionId = body[id];
+        console.log("DEBUG: Found sessionId in body[id]:", sessionId);
       }
     } else {
-      console.error('DEBUG: MCP sessions fetch failed:', await mcpSessionsResp.text())
+      console.error(
+        "DEBUG: MCP sessions fetch failed:",
+        await mcpSessionsResp.text()
+      );
     }
 
-    console.log('DEBUG: Final sessionId for MCPSessionManager:', sessionId)
-    const mcpSession = new MCPSessionManager(MCP_BASE_URL, userId, id, sessionId)
+    console.log("DEBUG: Final sessionId for MCPSessionManager:", sessionId);
+    const mcpSession = new MCPSessionManager(MCP_BASE_URL, userId, id, sessionId);
 
+    // ✅ Modelo NUNCA undefined
+    const model = myProvider.languageModel(selectedChatModel);
+
+    // Track executed tools
+    const executedTools: Array<{name: string, timestamp: string, success: boolean}> = [];
+    
     return createDataStreamResponse({
       execute: async (dataStream) => {
-        const system = systemPrompt({ selectedChatModel })
+        const system = systemPrompt({ selectedChatModel });
+
         await streamText(
           { dataStream, userMessage },
           {
-            model: myProvider.languageModel(selectedChatModel),
+            model,
             system,
             messages,
             maxSteps: 20,
@@ -162,16 +194,16 @@ export async function POST(request: Request) {
                     messages: response.messages.filter(
                       (message) => message.role === "assistant"
                     ),
-                  })
+                  });
 
                   if (!assistantId) {
-                    throw new Error("No assistant message found!")
+                    throw new Error("No assistant message found!");
                   }
 
                   const [, assistantMessage] = appendResponseMessages({
-                    messages: [userMessage],
+                    messages: [userMessage!],
                     responseMessages: response.messages,
-                  })
+                  });
 
                   await saveMessages({
                     messages: [
@@ -185,9 +217,9 @@ export async function POST(request: Request) {
                         createdAt: new Date(),
                       },
                     ],
-                  })
+                  });
                 } catch (error) {
-                  console.error("Failed to save chat")
+                  console.error("Failed to save chat");
                 }
               }
             },
@@ -196,54 +228,54 @@ export async function POST(request: Request) {
               functionId: "stream-text",
             },
           }
-        )
+        );
       },
       onError: (error) => {
-        console.error("Error:", error)
-        return "Oops, an error occured!"
+        console.error("Error:", error);
+        return "Oops, an error occured!";
       },
-    })
+    });
   } catch (error) {
+    console.error("route.ts POST error:", error);
     return new Response("An error occurred while processing your request!", {
       status: 404,
-    })
+    });
   }
 }
 
 export async function DELETE(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const id = searchParams.get("id")
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
 
   if (!id) {
-    return new Response("Not Found", { status: 404 })
+    return new Response("Not Found", { status: 404 });
   }
 
-  const session = await getEffectiveSession()
+  const session = await getEffectiveSession();
 
   if (!session || !session.user) {
-    return new Response("Unauthorized", { status: 401 })
+    return new Response("Unauthorized", { status: 401 });
   }
-  
-  const userId = session.user.id
 
-  // In dev mode without auth, just return success without deleting
+  const userId = session.user.id;
+
   if (!shouldPersistData()) {
-    return new Response("Chat deleted", { status: 200 })
+    return new Response("Chat deleted", { status: 200 });
   }
 
   try {
-    const chat = await getChatById({ id })
+    const chat = await getChatById({ id });
 
     if (chat.userId !== userId) {
-      return new Response("Unauthorized", { status: 401 })
+      return new Response("Unauthorized", { status: 401 });
     }
 
-    await deleteChatById({ id })
+    await deleteChatById({ id });
 
-    return new Response("Chat deleted", { status: 200 })
+    return new Response("Chat deleted", { status: 200 });
   } catch (error) {
     return new Response("An error occurred while processing your request!", {
       status: 500,
-    })
+    });
   }
 }

@@ -124,6 +124,7 @@ class MCPSessionManager {
   private sessionId: string | undefined
   private chatId: string
   private userId: string
+  private keepalive: NodeJS.Timeout | null = null
 
   constructor(mcpBaseUrl: string, userId: string, chatId: string, sessionId: string | undefined) {
     console.log(`Using ${mcpBaseUrl} as the MCP Server.`)
@@ -286,10 +287,12 @@ class MCPSessionManager {
     }
 
     try {
+      console.log(`🔧 Ejecutando herramienta: ${name}`)
+      
       // Execute the tool using the SDK
       const result = await this.client.callTool({
         name,
-        arguments: args,
+        arguments: args as { [x: string]: unknown },
       })
 
       // Clear timeout if it was set
@@ -297,8 +300,24 @@ class MCPSessionManager {
         clearTimeout(timeoutId)
       }
 
-      return result
+      console.log(`✅ Herramienta ${name} ejecutada exitosamente`)
+      console.log(`🔍 Resultado original del MCP:`, JSON.stringify(result, null, 2))
+      
+      // Return enhanced result with tool information
+      const enhancedResult = {
+        ...result,
+        toolName: name,
+        toolExecuted: true,
+        success: true,
+        timestamp: new Date().toISOString(),
+        // Include the original result content
+        content: result.content || result.text || result.message || "Herramienta ejecutada correctamente"
+      }
+      
+      console.log(`📤 Resultado mejorado enviado:`, JSON.stringify(enhancedResult, null, 2))
+      return enhancedResult
     } catch (error) {
+      console.error(`❌ Error ejecutando herramienta ${name}:`, error)
       if (abortController.signal.aborted) {
         throw new Error("Tool execution aborted or timed out")
       }
