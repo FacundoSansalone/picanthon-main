@@ -1,85 +1,104 @@
-<a href="https://chat.pipedream.com/">
-  <img alt="MCP Chat by Pipedream" src="app/(chat)/opengraph-image.png">
-  <h1 align="center">MCP Chat by Pipedream</h1>
-</a>
+# 📧 Gmail & Calendar AI Assistant
 
-<p align="center">
-  MCP Chat is a free, open-source chat app built using the AI SDK, and Pipedream MCP, which provides access to nearly 3,000 APIs and more than 10,000 tools. Use this as a reference to build powerful AI chat applications.
-</p>
+Asistente de IA que automatiza **Gmail** y **Google Calendar** usando lenguaje natural.
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#model-providers"><strong>Model Providers</strong></a> ·
-  <a href="#prerequisites"><strong>Prerequisites</strong></a> ·
-  <a href="#deploy-your-own"><strong>Deploy Your Own</strong></a> ·
-  <a href="#running-locally"><strong>Running Locally</strong></a>
-</p>
-<br/>
+---
 
-> **Check out the app in production at [chat.pipedream.com](https://chat.pipedream.com) and refer to [Pipedream's developer docs](https://pipedream.com/docs/connect/mcp/developers) for the most up to date information.**
+##  Qué Puedes Hacer
 
-## Features
+### 📧 Gmail
+- Enviar emails → *"Envía un email a juan@example.com con el reporte"*
+- Leer emails → *"¿Tengo emails sin leer de María?"*(Solo funciona en la web app, no por wpp)
+- Buscar emails → *"Busca emails sobre el Asunto X"*(Solo funciona en la web app, no por wpp)
+- Responder emails → *"Responde al último email de soporte"*(Solo funciona en la web app, no por wpp)
 
-- **MCP integrations**: Connect to thousands of APIs through Pipedream's MCP server with built-in auth
-- **Automatic tool discovery**: Execute tool calls across different APIs via chat
-- **Uses the [AI SDK](https://sdk.vercel.ai/docs)**: Unified API for generating text, structured objects, and tool calls with LLMs
-- **Flexible LLM and framework support**: Works with any LLM provider or framework
-- **Data persistence**: Uses [Neon Serverless Postgres](https://vercel.com/marketplace/neon) for saving chat history and user data and [Auth.js](https://authjs.dev) for simple and secure sign-in
+### 📅 Google Calendar
+- Crear eventos → *"Agenda reunión mañana a las 3pm"*
+- Ver agenda → *"¿Qué tengo el viernes?"*(Solo por web)
 
-## Model Providers
 
-The demo app currently uses models from Anthropic, OpenAI, and Gemini, but the AI SDK supports [many more](https://sdk.vercel.ai/providers/ai-sdk-providers).
+---
 
-### Prerequisites
+## 🚀 Cómo Levantar la App
 
-To run or deploy this app, you'll need:
+### 1. Requisitos
+- **Node.js 18+** → [Descargar](https://nodejs.org/)
+- **pnpm** → Instalar: `npm install -g pnpm`
 
-1. A [Pipedream account](https://pipedream.com/auth/signup)
-2. A [Pipedream project](https://pipedream.com/docs/projects/#creating-projects). Accounts connected via MCP will be stored here.
-3. [Pipedream OAuth credentials](https://pipedream.com/docs/rest-api/auth/#oauth)
-4. An [OpenAI API key](https://platform.openai.com/api-keys)
-
-## Deploy Your Own
-
-One-click deploy this app to Vercel:
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FPipedreamHQ%2Fmcp-chat&env=PIPEDREAM_CLIENT_ID,PIPEDREAM_CLIENT_SECRET,PIPEDREAM_PROJECT_ID,PIPEDREAM_PROJECT_ENVIRONMENT,AUTH_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,OPENAI_API_KEY,EXA_API_KEY,POSTGRES_URL&envDescription=API%20keys%20need%20to%20run%20the%20app)
-
-## Running locally
-
-1. Copy the environment file and add your credentials:
+### 2. Instalación
 
 ```bash
-cp .env.example .env  # Edit with your values
-```
+# Clonar el repositorio
+git clone <tu-repo>
+cd picanthon-main
 
-Note that for easier development, chat persistence and application sign-in are disabled by default in the `.env.example` file:
-
-```bash
-# In your .env file
-DISABLE_AUTH=true
-DISABLE_PERSISTENCE=true
-```
-
-2. Install dependencies and start the app:
-
-```bash
+# Instalar dependencias
 pnpm install
-pnpm dev
 ```
 
-Your local app should now be running on [http://localhost:3000](http://localhost:3000/) 🎉
+### 3. Configurar `.env`
 
-### Enabling chat persistence
+Crea un archivo `.env` en la raíz:
+##Copiar el .env.example
 
-1. Run all required local services:
+### 4. Iniciar
 
 ```bash
-docker compose up -d
+pnpm run dev
 ```
 
-2. Run migrations:
+Abre: **http://localhost:3000**
 
+---
+
+## 🔗 Conectar Gmail/Calendar
+
+1. Envía un mensaje: *"Envía un email a test@example.com"*
+2. Click en **"Connect account"**
+3. Autoriza con Google
+4. ¡Listo! Ya puedes usar Gmail y Calendar
+
+Ver cuentas conectadas: **http://localhost:3000/accounts**
+
+---
+
+## 📝 Ejemplos
+
+```
+Usuario: Envía un email a manuel@test.com diciendo "Confirmo la reunión"
+IA: ✅ Email enviado correctamente
+
+Usuario: ¿Qué tengo mañana?
+IA: Mañana tienes:
+    - 9:00 AM - Reunión semanal
+    - 2:00 PM - Presentación del proyecto
+
+Usuario: Agenda una call con el equipo el jueves a las 4pm
+IA: ✅ Evento creado: "Call con el equipo"
+    📅 Jueves, 20 de octubre, 16:00 - 17:00
+```
+
+---
+
+## 🛠️ Solución de Problemas
+
+**Puerto ocupado:**
 ```bash
-POSTGRES_URL=postgresql://postgres@localhost:5432/postgres pnpm db:migrate
+# Windows
+netstat -ano | findstr :3000
+taskkill /PID <número> /F
+
+# Mac/Linux
+lsof -ti:3000 | xargs kill -9
 ```
+
+**No conecta con Gmail:**
+- Verifica las credenciales de Pipedream en `.env`
+- Reconecta la cuenta en `/accounts`
+
+**Reinstalar dependencias:**
+```bash
+rm -rf node_modules .next
+pnpm install
+```
+
