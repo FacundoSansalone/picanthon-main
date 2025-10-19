@@ -46,12 +46,30 @@ export async function POST(request: Request) {
       : [];
 
     // Prioridad: body.model -> body.selectedChatModel -> env -> default
-    const selectedChatModel: string =
+    let selectedChatModel: string =
       (typeof raw?.model === "string" && raw.model.trim()) ||
       (typeof raw?.selectedChatModel === "string" &&
         raw.selectedChatModel.trim()) ||
       process.env.DEFAULT_CHAT_MODEL ||
       "gpt-4o-mini";
+
+    // ✅ Enforce OpenAI only - Rollback automático
+    const OPENAI_ONLY = new Set([
+      "gpt-4o-mini"
+    ]);
+    const DEFAULT_CHAT_MODEL = "gpt-4o-mini";
+
+    const originalModel = selectedChatModel;
+    
+    if (!OPENAI_ONLY.has(selectedChatModel)) {
+      console.log("❌ /api/chat: Modelo no-OpenAI detectado:", selectedChatModel);
+      console.log("🔒 /api/chat: Solo se permiten modelos OpenAI:", Array.from(OPENAI_ONLY));
+      console.log("🔄 /api/chat: Haciendo rollback automático a:", DEFAULT_CHAT_MODEL);
+      selectedChatModel = DEFAULT_CHAT_MODEL;
+      console.log("✅ /api/chat: Rollback completado:", originalModel, "→", selectedChatModel);
+    } else {
+      console.log("✅ /api/chat: Modelo OpenAI válido:", selectedChatModel);
+    }
 
     const session = await getEffectiveSession();
 
@@ -94,6 +112,7 @@ export async function POST(request: Request) {
         role: "user",
         parts: [{ type: "text", text: "init" }],
         experimental_attachments: [],
+        content: "init"
       } as UIMessage;
     }
 

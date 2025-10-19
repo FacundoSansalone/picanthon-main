@@ -210,12 +210,23 @@ export async function POST(req: NextRequest) {
       ? { chatId: String(bodyChatId), setCookie: false }
       : await resolveValidChatId(req);
 
-    // Enforce OpenAI only + fallback
-    const model =
-      (typeof bodyModel === "string" &&
-        OPENAI_ONLY.has(bodyModel.trim()) &&
-        bodyModel.trim()) ||
-      DEFAULT_CHAT_MODEL;
+    // Enforce OpenAI only + rollback automático
+    const originalModel = bodyModel;
+    let model = DEFAULT_CHAT_MODEL;
+    
+    if (typeof bodyModel === "string" && bodyModel.trim()) {
+      if (OPENAI_ONLY.has(bodyModel.trim())) {
+        model = bodyModel.trim();
+        console.log("✅ /api/mcp: Modelo OpenAI válido:", model);
+      } else {
+        console.log("❌ /api/mcp: Modelo no-OpenAI detectado:", bodyModel);
+        console.log("🔒 /api/mcp: Solo se permiten modelos OpenAI:", Array.from(OPENAI_ONLY));
+        console.log("🔄 /api/mcp: Haciendo rollback automático a:", DEFAULT_CHAT_MODEL);
+        console.log("✅ /api/mcp: Rollback completado:", originalModel, "→", model);
+      }
+    } else {
+      console.log("🔄 /api/mcp: Usando modelo por defecto:", model);
+    }
 
     // Proxyear a /api/chat (pedimos JSON; si streamea igual, lo parseamos)
     const chatRes = await fetch(`${BASE}/api/chat`, {
